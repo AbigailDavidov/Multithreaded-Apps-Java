@@ -184,7 +184,7 @@ public class LockHierarchyWithTryLockExample {
         new Thread(example::method2).start();  
     }  
 }
-
+```
 **Exercise 2: Java Memory Leak and Analysis** 
 
 **a) Implementation Task:** 
