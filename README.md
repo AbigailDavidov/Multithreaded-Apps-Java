@@ -76,48 +76,48 @@ Deadlocks can be avoided or mitigated through various techniques:
 **Lock Hierarchy:** Enforce a **structured order** where locks are acquired in a **hierarchical manner** (higher-level locks before lower-level ones), ensuring no circular dependencies at different levels of the system (similarly, **resource ordering** is used in a global order for linear sequence).
 
 Let's say your application has two resources: `resource1` and `resource2`. You can define a **lock hierarchy** by always ensuring that threads acquire `resource1` first and then `resource2`, never the other way around.
+```
+public class LockHierarchyExample {
 
-`public class LockHierarchyExample {`
+    private final Object resource1 = new Object();
 
-    `private final Object resource1 = new Object();`
+    private final Object resource2 = new Object();
+   
 
-    `private final Object resource2 = new Object();`
+    // Thread 1
 
-    
+    public void method1() {
 
-    `// Thread 1`
+        synchronized (resource1) {    // Always lock resource1 first
 
-    `public void method1() {`
+            synchronized (resource2) {  // Then lock resource2
 
-        `synchronized (resource1) {    // Always lock resource1 first`
+                // Access both resources
 
-            `synchronized (resource2) {  // Then lock resource2`
+            }
 
-                `// Access both resources`
+        }
 
-            `}`
+    }
 
-        `}`
+    // Thread 2
 
-    `}`
+    public void method2() {
 
-    `// Thread 2`
+        synchronized (resource1) {    // Always lock resource1 first
 
-    `public void method2() {`
+            synchronized (resource2) {  // Then lock resource2
 
-        `synchronized (resource1) {    // Always lock resource1 first`
+                // Access both resources
 
-            `synchronized (resource2) {  // Then lock resource2`
+            }
 
-                `// Access both resources`
+        }
 
-            `}`
+    }
 
-        `}`
-
-    `}`
-
-`}`
+}
+```
 
 By enforcing the same order (`resource1` first, then `resource2`), the risk of a **deadlock** is eliminated because no thread will be able to acquire `resource2` before `resource1` (and vice versa).
 
@@ -125,64 +125,65 @@ By enforcing the same order (`resource1` first, then `resource2`), the risk of a
 
 Here is an example of a program where two threads try to acquire locks in a specific order (resource ordering) using `tryLock` to avoid deadlock:
 
-`import java.util.concurrent.locks.Lock;`  
-`import java.util.concurrent.locks.ReentrantLock;`
+```
+import java.util.concurrent.locks.Lock;  
+import java.util.concurrent.locks.ReentrantLock;
 
-`public class LockHierarchyWithTryLockExample {`
+public class LockHierarchyWithTryLockExample {
 
-    `private final Lock lock1 = new ReentrantLock();`  
-    `private final Lock lock2 = new ReentrantLock();`
+    private final Lock lock1 = new ReentrantLock();  
+    private final Lock lock2 = new ReentrantLock();
 
-    `// Thread 1`  
-    `public void method1() {`  
-        `try {`  
-            `// Try to acquire lock1`  
-            `if (lock1.tryLock() && lock2.tryLock()) {`  
-                `try {`  
-                    `// Access both resources`  
-                `} finally {`  
-                    `lock1.unlock();`  
-                    `lock2.unlock();`  
-                `}`  
-            `} else {`  
-                `// If locks couldn't be acquired, do something else or retry`  
-                `System.out.println("Could not acquire locks in method1, retrying...");`  
-            `}`  
-        `} catch (Exception e) {`  
-            `// Handle exception`  
-            `e.printStackTrace();`  
-        `}`  
-    `}`
+    // Thread 1  
+    public void method1() {  
+        try {  
+            // Try to acquire lock1  
+            if (lock1.tryLock() && lock2.tryLock()) {  
+                try {  
+                    // Access both resources  
+                } finally {  
+                    lock1.unlock();  
+                    lock2.unlock();  
+                }  
+            } else {  
+                // If locks couldn't be acquired, do something else or retry  
+                System.out.println("Could not acquire locks in method1, retrying...");  
+            }  
+        } catch (Exception e) {  
+            // Handle exception  
+            e.printStackTrace();  
+        }  
+    }
 
-    `// Thread 2`  
-    `public void method2() {`  
-        `try {`  
-            `// Try to acquire lock1`  
-            `if (lock1.tryLock() && lock2.tryLock()) {`  
-                `try {`  
-                    `// Access both resources`  
-                `} finally {`  
-                    `lock1.unlock();`  
-                    `lock2.unlock();`  
-                `}`  
-            `} else {`  
-                `// If locks couldn't be acquired, do something else or retry`  
-                `System.out.println("Could not acquire locks in method2, retrying...");`  
-            `}`  
-        `} catch (Exception e) {`  
-            `// Handle exception`  
-            `e.printStackTrace();`  
-        `}`  
-    `}`
+    // Thread 2  
+    public void method2() {  
+        try {  
+            // Try to acquire lock1  
+            if (lock1.tryLock() && lock2.tryLock()) {  
+                try {  
+                    // Access both resources  
+                } finally {  
+                    lock1.unlock();  
+                    lock2.unlock();  
+                }  
+            } else {  
+                // If locks couldn't be acquired, do something else or retry  
+                System.out.println("Could not acquire locks in method2, retrying...");  
+            }  
+        } catch (Exception e) {  
+            // Handle exception  
+            e.printStackTrace();  
+        }  
+    }
 
-    `public static void main(String[] args) {`  
-        `LockHierarchyWithTryLockExample example = new LockHierarchyWithTryLockExample();`  
+    public static void main(String[] args) {  
+        LockHierarchyWithTryLockExample example = new LockHierarchyWithTryLockExample();  
           
-        `// Simulating thread execution`  
-        `new Thread(example::method1).start();`  
-        `new Thread(example::method2).start();`  
-    `}`  
-`}`
+        // Simulating thread execution  
+        new Thread(example::method1).start();  
+        new Thread(example::method2).start();  
+    }  
+}
 
 **Exercise 2: Java Memory Leak and Analysis** 
 
@@ -287,12 +288,14 @@ In a **multithreaded environment**, memory leaks can be more complicated to dete
 
 Always ensure threads are properly terminated and not left running indefinitely. Use thread pools (e.g., `ExecutorService`) to manage threads instead of manually creating and managing threads.
 
-**Example**: If using an `ExecutorService`, always ensure that it is shut down when done:  
-	`ExecutorService executor = Executors.newFixedThreadPool(10);`
+**Example**: If using an `ExecutorService`, always ensure that it is shut down when done:
+```
+ExecutorService executor = Executors.newFixedThreadPool(10);
 
-`// Submit tasks to the executor`
+// Submit tasks to the executor
 
-`executor.shutdown(); // Properly shuts down the thread pool`
+executor.shutdown(); // Properly shuts down the thread pool
+```
 
 **2\. Weak References for Caches**:
 
@@ -300,11 +303,13 @@ Use **weak references** (`WeakReference`, `SoftReference`) when implementing cac
 
 **Example**:
 
-	`WeakHashMap<KeyType, ValueType> cache = new WeakHashMap<>();`
+```
+WeakHashMap<KeyType, ValueType> cache = new WeakHashMap<>();
 
-`cache.put(new KeyType(), new ValueType());`
+cache.put(new KeyType(), new ValueType());
 
-`// Objects in WeakHashMap are eligible for GC when no strong references exist`
+// Objects in WeakHashMap are eligible for GC when no strong references exist
+```
 
 **3\. Avoid Holding References in Static Fields**:
 
@@ -312,27 +317,27 @@ Static fields can persist across multiple threads and be the cause of memory lea
 
 **Example**:
 
-	`public class MemoryLeakExample {`
+```
+public class MemoryLeakExample {
 
-    `private static List<MyObject> sharedList = new ArrayList<>();`
+    private static List<MyObject> sharedList = new ArrayList<>();
+
+
+    public static void addToList(MyObject obj) {
+
+        sharedList.add(obj); // Uncontrolled growth of sharedList
+
+    }
 
     
+    public static void clearList() {
 
-    `public static void addToList(MyObject obj) {`
+        sharedList.clear(); // Avoid memory leaks by clearing unused references
 
-        `sharedList.add(obj); // Uncontrolled growth of sharedList`
+    }
 
-    `}`
-
-    
-
-    `public static void clearList() {`
-
-        `sharedList.clear(); // Avoid memory leaks by clearing unused references`
-
-    `}`
-
-`}`
+}
+```
 
 **4\. Proper Use of ThreadLocal Variables**:
 
@@ -340,19 +345,21 @@ Ensure that thread-local variables are removed or nullified when no longer neede
 
 **Example**:
 
-	`private static final ThreadLocal<MyObject> threadLocal = ThreadLocal.withInitial(MyObject::new);`
+```
+private static final ThreadLocal<MyObject> threadLocal = ThreadLocal.withInitial(MyObject::new);
 
-`public void process() {`
+public void process() {
 
-    `// Access and use the thread-local variable`
+    // Access and use the thread-local variable
 
-    `MyObject obj = threadLocal.get();`
+    MyObject obj = threadLocal.get();
 
-    `// After usage, clean it up`
+    // After usage, clean it up
 
-    `threadLocal.remove();  // Important to prevent memory leaks`
+    threadLocal.remove();  // Important to prevent memory leaks
 
-`}`
+}
+```
 
 **5\. Using `ExecutorService` for Managing Threads**:
 
@@ -360,15 +367,17 @@ Properly shut down the thread pools created via `ExecutorService` to avoid zombi
 
 **Example**:
 
-	`ExecutorService executor = Executors.newFixedThreadPool(5);`
+```
+ExecutorService executor = Executors.newFixedThreadPool(5);
 
-`executor.submit(() -> {`
+executor.submit(() -> {
 
-    `// Task implementation`
+    // Task implementation
 
-`});`
+});
 
-`executor.shutdown(); // Properly shut down the executor`
+executor.shutdown(); // Properly shut down the executor
+```
 
 **6\. Use of `finally` Blocks or Try-with-Resources**:
 
@@ -376,23 +385,25 @@ Always clean up resources (like I/O streams, sockets, database connections) in a
 
 **Example**:
 
-	`try (BufferedReader br = new BufferedReader(new FileReader("file.txt"))) {`
+```
+try (BufferedReader br = new BufferedReader(new FileReader("file.txt"))) {
 
-    `String line;`
+    String line;
 
-    `while ((line = br.readLine()) != null) {`
+    while ((line = br.readLine()) != null) {
 
-        `// Process the line`
+        // Process the line
 
-    `}`
+    }
 
-`} catch (IOException e) {`
+} catch (IOException e) {
 
-    `e.printStackTrace();`
+    `e.printStackTrace();
 
-`}`
+}
 
-`// No need to manually close the BufferedReader, it will be automatically closed`
+// No need to manually close the BufferedReader, it will be automatically closed
+```
 
 **7\. Memory Profiling and Monitoring**:
 
@@ -410,15 +421,17 @@ Implement an eviction strategy for caches (like using **LRU (Least Recently Used
 
 **Example**:
 
-	`LinkedHashMap<Key, Value> cache = new LinkedHashMap<>(16, 0.75f, true) {`
+```
+LinkedHashMap<Key, Value> cache = new LinkedHashMap<>(16, 0.75f, true) {
 
-    `@Override`
+    @Override
 
-    `protected boolean removeEldestEntry(Map.Entry<Key, Value> eldest) {`
+    protected boolean removeEldestEntry(Map.Entry<Key, Value> eldest) {
 
-        `return size() > MAX_CACHE_SIZE;`
+        return size() > MAX_CACHE_SIZE;
 
-    `}};`
+    }};
+```
 
 **Exercise 3: CPU Consumption Implementation and Analysis:** 
 
